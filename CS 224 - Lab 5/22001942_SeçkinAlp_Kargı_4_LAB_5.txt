@@ -1,0 +1,720 @@
+CS224
+Lab No: 5
+Section No: 4
+Seçkin Alp Kargı
+22001942
+24.11.2023
+
+------------------------------------------------------------------------------------------
+`timescale 1ns / 1ps
+module topfinal
+(
+    input logic clk, sw_input1, sw_input2,
+    output logic dp, MemWriteD,
+    output logic [3:0]an,
+    output logic [6:0] seg,
+    output logic [1:0] ForwardAE,ForwardBE,ForwardCE
+);
+logic [31:0] dataadr, writedata;
+logic clk_pulse_2, clk_pulse_1;
+
+pulse_controller pulse1(clk,sw_input1,0,clk_pulse_1);
+pulse_controller pulse2(clk,sw_input2,0,clk_pulse_2);
+top_mips top1(.clk(clk_pulse_1),.reset(clk_pulse_2),.ALUOutE(dataadr),.instrF(writedata),.ForwardAE(ForwardAE),.ForwardBE(ForwardBE),.ForwardCE(ForwardCE),.MemWriteD(MemWriteD)); 
+
+module PipeDtoE(input logic RegWriteD,MemtoRegD,MemWriteD,ALUSrcD,RegDstD,BranchD,clk,FlushE,reset
+input logic [2:0] ALUControlD,
+input logic [4:0] RsD, RtD, RdE,
+input logic [31:0] SignImmD, RD1, RD2,
+output logic RegWriteE, MemtoRegE, MemWriteE, ALUSrcE, RegDstE,
+output logic [2:0] ALUControlE,
+output logic [4:0] RsE, RtE, RdE,
+output logic [31:0] SignImmE, RD1out,RD2out );
+endmodule
+module PipeEtoM(input logic clk, MemWriteE, RegWriteE, MemtoRegE, reset,
+input logic [4:0] WriteDataE,
+input logic [31:0] ALUoute, WriteDataE,
+output logic RegWriteM, MemtoRegM, MemWriteM,
+output logic [4:0] WriteRegM
+output logic [31:0] AluOutM, WriteDataM );
+endmodule
+module PipeMtoW(input logic clk, RegWriteM, MemtoRegM, reset
+input logic [4:0] WriteRegM,
+input logic [31:0] RD, ALUOutM,
+output logic RegWriteW, MemtoRegW,
+output logic [4:0] WriteRegW,
+output logic [31:0] ReadDataW, ALUOutW );
+endmodule
+module datapath (input logic clk, reset, RegWriteW,
+input logic[2:0] ALUControlD,
+input logic BranchD,
+input logic [31:0] pcPlus4D,
+input logic [31:0] ResultW,
+input logic [4:0] rsD,rtD,rdD,
+input logic [15:0] immD,
+input logic [4:0] WriteRegW,
+output logic RegWriteE,MemToRegE,MemWriteE,
+output logic[31:0] ALUOutE, WriteDataE,
+output logic [4:0] WriteRegE,
+output logic [31:0] PC, PCF, PCBranchE,
+output logic pcSrcE);
+logic stallF, stallD, ForwardAD, ForwardBD, FlushE, ForwardAE, ForwardBE;// Wires for connec􀆟ng Hazard Unit
+logic [31:0] PcBranchD, PcPlus4F, PcSrcA, PcSrcB, ALUOutM, WriteDataM, ReadDataW, ALUOutW, PcPlus4D, SignImmD, SignImmDShi􀅌ed, ResultW, SignImmE, SrcAE, SrcBE, ReadData,RD1Out,RD2Out,mx2Out,mx3Out;
+logic [4:0] WriteRegW, WriteRegE, WriteRegM, rsE, rtE, rdE, rsD, rtD, rdD;
+logic[2:0] ALUControlE;
+logic MemWriteM, MemtoRegW, ALUSrcE, RegDstE, RegWriteW;
+mux2 #32 mx1(PCPlus4F,PCBranchD,PCSrcD,PC’);
+PipeWtoF pipe1(PC’,StallF,clk,PCF);
+adder add1(PCF, 32’b04,PCPlus4F);
+PipeFtoD pipe2(RD,PCPlus4F,StallD,clk,InstrD,PCPlus4D);
+Imem imem1(PCF,RD);
+signext sign1(InstrD[15:0], SignImmD);
+sl2 sl21(SignImmD, SignShi􀅌edOut);
+regfile rf (clk, regwrite, instr[25:21], instr[20:16], writeregW,result, srca, writedata);
+adder add2(SignShi􀅌ed, PCPlus4D, PCBranchD);
+mux2 #32 mx2(RD1,ALUOutM,mx2Out);
+mux2 #32 mx3(RD2,ALUOutM,mx3Out);
+equal equal1(mx2Out,mx3Out,EqualD);
+and2 and21(BranchD, EqualD, PCSrcD);
+PipeDtoE pipe3(RegWriteD,MemtoRegD,MemWriteD, ALUSrcD, RegDstD, BranchD, clk, FlushE, reset, ALUControlD, RsD, RtD, RdE, SignImmD, RD1, RD2, RegWriteE, MemtoRegE, MemWriteE, ALUSrcE, RegDstE, ALUControlE, RsE, RtE, RdE, SignImmE, RD1out,RD2out);
+mux2 #4 mx4(RtE,RdE,WriteRegE);
+mux4 #32 mx5(RD1out,ResultW,ALUOutM,32’b0,SrcAE);
+mux4 #32 mx6(RD2out,ResultW,ALUOutM,32’b0,WriteDataE);
+mux2 #32 mx7(WriteDataE,SignImme,SrcBE);
+alu alu1(SrcAE, SrcBE,ALUControlE,ALUOute);
+PipeEtoM pipe4(clk, MemWriteE, RegWriteE, MemtoRegE, reset, WriteDataE, ALUoute, WriteDataE, RegWriteM, MemtoRegM, MemWriteM, WriteRegM,AluOutM, WriteDataM );
+PipeMtoW pipe5(clk, RegWriteM, MemtoRegM, reset, WriteRegM , ALUOutM, RegWriteW, MemtoRegW, WriteRegW, ReadDataW, ALUOutW);
+mux2 #32 mx7(ReadDataW, ALUOutW, MemtoRegW,ResultW);
+HazardUnite hazardunit1(RegWriteW, WriteRegW, RegWriteM,MemToRegM, WriteRegM, RegWriteE, MemToRegE, rsE, rtE, rsD,rtD, ForwardAE,ForwardBE, ,StallD,StallF);
+Endmodule
+module HazardUnit( input logic RegWriteW,
+input logic [4:0] WriteRegW,
+input logic RegWriteM,MemToRegM,
+input logic [4:0] WriteRegM,
+input logic RegWriteE,MemToRegE,
+input logic [4:0] rsE,rtE,
+input logic [4:0] rsD,rtD,
+output logic [2:0] ForwardAE,ForwardBE,
+output logic FlushE,StallD,StallF
+);
+Logic branchStall,lwStall;
+always_comb begin
+BranchStall = (MemtoRegM & BranchD & (WriteRegM == rtD | WriteRegM == rsD) | (BranchD & (WriteRegE == rsD | WriteRegE = rtD) & RegWriteE);
+lwStall = MemtoRegE & ((rtD == rtE) | (rtE == rsD));
+ForwardAD = RegWriteM & (rsD != 0) & (rsD == WriteRegM);
+ForwardBD = RegWriteM & (rtD != 0) & (rtD == WriteRegM);
+StallD <= lwstall | branchstall;
+StallF <= lwstall | branchstall;
+FlushE <= lwstall | branchstall;
+If ( RegWriteM & (rsE != 0) & ( rsE == WriteRegW)) begin
+ForwardAE = 2b’10; end
+else if ( RegWriteW & (rsE != 0) & ( rsE == WriteRegW)) begin
+ForwardAE =2b’01; end
+Else
+ForwardAE = 2b’00;
+If ( RegWriteM & (rtE != 0) & ( rtE == WriteRegW)) begin
+ForwardBE = 2b’10; end
+else if ( RegWriteW & (rtE != 0) & ( rtE == WriteRegW)) begin
+ForwardBE = 2b’01; end
+Else
+ForwardBE = 2b’00;
+End
+If ( RegWriteM & (rdE != 0) & ( rdE == WriteRegW)) begin
+ForwardCE = 2b’10; end
+else if ( RegWriteW & (rdE != 0) & ( rdE == WriteRegW)) begin
+ForwardCE = 2b’01; end
+Else
+ForwardCE = 2b’00;
+end
+module mips (input logic clk, reset,
+output logic[31:0] pc,
+input logic[31:0] instr,
+output logic memwrite,
+output logic[31:0] aluout, resultW,
+output logic[31:0] instrOut,
+input logic[31:0] readdata);
+logic memtoreg, pcsrc, zero, alusrc, regdst, regwrite, jump;
+logic [2:0] alucontrol;
+assign instrOut = instr;
+controller controller1(input logic[5:0] op, funct, memtoreg, memwrite, alusrc, regdst, regwrite, jump, alucontrol, branch);
+datapath datapath1(clk, reset, RegWriteW, ALUControlD, BranchD, pcPlus4D, ResultW, rsD,rtD,rdD, immD, WriteRegW,,RegWriteE, MemToRegE,MemWriteE, ALUOutE, WriteDataE, WriteRegE, PC, PCF, PCBranchE, pcSrcE);
+);
+endmodule
+module imem ( input logic [5:0] addr, output logic [31:0] instr);
+8'h00: instr = 32'h20100019; -> addi $t4, $zero, 25
+8'h04: instr = 32'h 2015003C; -> addi $t5, $zero, 60
+8'h08: instr = 32'h 018C8825; -> or $s3, $t5, $
+8'h0c: instr = 32' 218FFFF8; -> addi $t7, $t4, -24
+8'h10: instr = 32'h 01F78020; -> add $s5, $t4, $t7
+8'h14: t4instr = 32'h 2016001E; -> addi $t6, $zero, 30
+8'h18: instr = 32'h 01AE9024; -> and $s4, $t5, $t6
+8'h1c: instr = 32'h 01D6202A; -> slt $a0, $t4, $t6
+8'h20: instr = 32'h 01AD8822; -> sub $a2, $s4, $ t5
+8'h24: instr = 32'h 02948820; -> add $a1, $s3, $s4
+8'h28: instr = 32' AE8D0014; -> sw $s4, 0x14($t5)
+8'h2c: instr = 32' 8C020020; -> lw $v0, 0x20($zero)
+default: instr = {32{1'bx}}; // unknown address
+endcase
+endmodule
+endmodule
+
+display_controller display(clk,writedata[7:4],writedata[3:0],dataadr[7:4],dataadr[3:0],seg,dp,an);
+
+
+endmodule
+/////////////////////////////////////////////////////////////////////////////////
+// 
+//   This module takes a slide switch or pushbutton input and 
+//   does the following:
+//     --debounces it (ignoring any addtional changes for ~40 milliseconds)
+//     --synchronizes it with the clock edges
+//     --produces just one pulse, lasting for one clock period
+//   
+//   Note that the 40 millisecond debounce time = 2000000 cycles of 
+//   50MHz clock (which has 20 nsec period)
+//   
+//   Inputs/Outputs:
+//   sw_input: the signal coming from the slide switch or pushbutton
+//   CLK: the system clock on the BASYS3 board
+//   clear: resets the pulse controller
+//   clk_pulse: the synchronized debounced single-pulse output
+//
+//   Usage for CS224 Lab4-5: 
+//   - Give the BASYS3 clock and the push button signal as inputs
+//   - You don't need to clear the controller
+//   - Send the output pulse to your top module
+//   
+//   For correct connections, carefully plan what should be in the .XDC file
+//
+//////////////////////////////////////////////////////////////////////////////////
+`timescale 1ns / 1ps
+module pulse_controller(
+	input CLK, sw_input, clear,
+	output reg clk_pulse );
+
+	 reg [2:0] state, nextstate;
+	 reg [27:0] CNT; 
+	 wire cnt_zero; 
+
+	always @ (posedge CLK, posedge clear)
+	   if(clear)
+	    	state <=3'b000;
+	   else
+	    	state <= nextstate;
+
+	always @ (sw_input, state, cnt_zero)
+          case (state)
+             3'b000: begin if (sw_input) nextstate = 3'b001; 
+                           else nextstate = 3'b000; clk_pulse = 0; end	     
+             3'b001: begin nextstate = 3'b010; clk_pulse = 1; end
+             3'b010: begin if (cnt_zero) nextstate = 3'b011; 
+                           else nextstate = 3'b010; clk_pulse = 1; end
+             3'b011: begin if (sw_input) nextstate = 3'b011; 
+                           else nextstate = 3'b100; clk_pulse = 0; end
+             3'b100: begin if (cnt_zero) nextstate = 3'b000; 
+                           else nextstate = 3'b100; clk_pulse = 0; end
+            default: begin nextstate = 3'b000; clk_pulse = 0; end
+          endcase
+
+	always @(posedge CLK)
+	   case(state)
+		3'b001: CNT <= 100000000;
+		3'b010: CNT <= CNT-1;
+		3'b011: CNT <= 100000000;
+		3'b100: CNT <= CNT-1;
+	   endcase
+
+//  reduction operator |CNT gives the OR of all bits in the CNT register	
+	assign cnt_zero = ~|CNT;
+
+endmodule
+`timescale 1ns / 1ps
+////////////////////////////////////////////////////////
+//  
+//  This module puts 4 hexadecimal values (from O to F) on the 4-digit 7-segment display unit
+//  
+//  Inputs/Outputs:  
+//  clk: the system clock on the BASYS3 board
+//  in3, in2, in1, in0: the input hexadecimal values. in3(left), in2, in1, in0(right)         
+//  seg: the signals going to the segments of a digit.
+//       seg[6] is CA for the a segment, seg[5] is CB for the b segment, etc
+//  an:  anode, 4 bit enable signal, one bit for each digit
+//       an[3] is the left-most digit, an[2] is the second-left-most, etc  
+//  dp:  digital point
+//  
+//  Usage for CS224 Lab4-5: 
+//  - Give the system clock of BASYS3 and the hexadecimal values you want to display as inputs.
+//  - Send outputs to 7-segment display of BASYS3, using the .XDC file
+//
+//  Note: the an, seg and dp outputs are active-low, for the BASYS3 board
+//
+//  For correct connections, carefully plan what should be in the .XDC file
+//   
+////////////////////////////////////////////////////////
+
+module display_controller(
+
+input clk,
+input [3:0] in3, in2, in1, in0,
+output [6:0]seg, logic dp,
+output [3:0] an
+);
+
+localparam N = 18;
+
+logic [N-1:0] count = {N{1'b0}};
+always@ (posedge clk)
+count <= count + 1;
+
+logic [4:0]digit_val;
+
+logic [3:0]digit_en;
+always@ (*)
+
+begin
+digit_en = 4'b1111;
+digit_val = in0;
+
+case(count[N-1:N-2])
+
+2'b00 :	//select first 7Seg.
+
+begin
+digit_val = {1'b0, in0};
+digit_en = 4'b1110;
+end
+
+2'b01:	//select second 7Seg.
+
+begin
+digit_val = {1'b0, in1};
+digit_en = 4'b1101;
+end
+
+2'b10:	//select third 7Seg.
+
+begin
+digit_val = {1'b0, in2};
+digit_en = 4'b1011;
+end
+
+2'b11:	//select forth 7Seg.
+
+begin
+digit_val = {1'b0, in3};
+digit_en = 4'b0111;
+end
+endcase
+end
+
+//Convert digit number to LED vector. LEDs are active low.
+
+logic [6:0] sseg_LEDs;
+always @(*)
+begin
+sseg_LEDs = 7'b1111111; //default
+case( digit_val)
+5'd0 : sseg_LEDs = 7'b1000000; //to display 0
+5'd1 : sseg_LEDs = 7'b1111001; //to display 1
+5'd2 : sseg_LEDs = 7'b0100100; //to display 2
+5'd3 : sseg_LEDs = 7'b0110000; //to display 3
+5'd4 : sseg_LEDs = 7'b0011001; //to display 4
+5'd5 : sseg_LEDs = 7'b0010010; //to display 5
+5'd6 : sseg_LEDs = 7'b0000010; //to display 6
+5'd7 : sseg_LEDs = 7'b1111000; //to display 7
+5'd8 : sseg_LEDs = 7'b0000000; //to display 8
+5'd9 : sseg_LEDs = 7'b0010000; //to display 9
+5'd10: sseg_LEDs = 7'b0001000; //to display a
+5'd11: sseg_LEDs = 7'b0000011; //to display b
+5'd12: sseg_LEDs = 7'b1000110; //to display c
+5'd13: sseg_LEDs = 7'b0100001; //to display d
+5'd14: sseg_LEDs = 7'b0000110; //to display e
+5'd15: sseg_LEDs = 7'b0001110; //to display f
+5'd16: sseg_LEDs = 7'b0110111; //to display "="
+default : sseg_LEDs = 7'b0111111; //dash 
+endcase
+end
+
+assign an = digit_en;
+
+assign seg = sseg_LEDs;
+assign dp = 1'b1; //turn dp off
+
+endmodule
+`timescale 1ns / 1ps
+
+module topsimulation;
+    reg clk= 1'b1;
+    reg reset;
+    wire PcSrcD,MemWriteD,MemtoRegD,ALUSrcD,BranchD,RegDstD,RegWriteD,ForwardAD,ForwardBD;
+    wire [31:0] instrF,PC,PCF,instrD,ALUOutE,WriteDataE;
+    wire[2:0] alucontrol;
+    wire[1:0] ForwardAE, ForwardBE,ForwardCE;
+    top_mips top1
+    (
+        .clk(clk),
+        .reset(reset),
+            .instrF(instrF),
+            .PC(PC), 
+            .PCF(PCF),
+          .PcSrcD(PcSrcD),
+          .MemWriteD(MemWriteD),
+          .MemtoRegD(MemtoRegD), 
+          .ALUSrcD(ALUSrcD), 
+          .BranchD(BranchD), 
+          .RegDstD(RegDstD), 
+          .RegWriteD(RegWriteD),
+            .alucontrol(alucontrol),
+            .instrD(instrD), 
+             .ALUOutE(ALUOutE), 
+             .WriteDataE(WriteDataE),
+            .ForwardAE(ForwardAE),
+            .ForwardBE(ForwardBE), 
+            .ForwardCE(ForwardCE),
+           .ForwardAD(ForwardAD), 
+           .ForwardBD(ForwardBD)
+        
+    );
+    
+    always #5 clk = ~clk;
+    
+    initial
+    begin
+        reset = 0;
+        #50;
+        reset = 1;
+        #50;
+        reset = 0;
+        #250;
+        $finish;
+    end
+endmodule
+
+# This file is a general .xdc for the Basys3 rev B board 
+# To use it in a project: 
+# - uncomment the lines corresponding to used pins 
+# - rename the used ports (in each line, after get_ports) according to the top level signal names in the project 
+# Clock signal 
+set_property PACKAGE_PIN W5 [get_ports clk]  	 	 	 	  
+ 	set_property IOSTANDARD LVCMOS33 [get_ports clk] 
+# create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports clk] 
+# Switches 
+# LEDs 
+set_property PACKAGE_PIN U16 [get_ports {sw_input1}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {sw_input1}] 
+ 	
+set_property PACKAGE_PIN E19 [get_ports {sw_input2}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {sw_input2}]
+ 	
+ 	set_property CONFIG_INVERT true [get_ports {ForwardAE[0]}]
+set_property PACKAGE_PIN U19 [get_ports {ForwardAE[0]}]  
+	 set_property CONFIG_INVERT true [get_ports {ForwardAE[0]}]	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardAE[0]}]
+ 	set_property CONFIG_INVERT true [get_ports {ForwardAE[0]}] 
+set_property PACKAGE_PIN V19 [get_ports {ForwardAE[1]}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardAE[1]}] 
+set_property PACKAGE_PIN W18 [get_ports {ForwardAE[2]}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardAE[2]}] 
+ 	
+set_property PACKAGE_PIN U15 [get_ports {ForwardBE[0]}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardBE[0]}] 
+set_property PACKAGE_PIN U14 [get_ports {ForwardBE[1]}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardBE[1]}] 
+set_property PACKAGE_PIN V14 [get_ports {ForwardBE[2]}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardBE[2]}] 
+ 	
+set_property PACKAGE_PIN V13 [get_ports {ForwardCE[0]}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardCE[0]}] 
+set_property PACKAGE_PIN V3 [get_ports {ForwardCE[1]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardCE[1]}] 
+set_property PACKAGE_PIN W3 [get_ports {ForwardCE[2]}]  	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {ForwardCE[2]}] 
+ 	
+
+set_property PACKAGE_PIN L1 [get_ports {MemWriteD}]  	 	 	 	  			
+	set_property IOSTANDARD LVCMOS33 [get_ports {MemWriteD}] 
+ 	 
+#7 segment display 
+set_property PACKAGE_PIN W7 [get_ports {seg[0]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {seg[0]}] 
+set_property PACKAGE_PIN W6 [get_ports {seg[1]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {seg[1]}] 
+set_property PACKAGE_PIN U8 [get_ports {seg[2]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {seg[2]}] 
+set_property PACKAGE_PIN V8 [get_ports {seg[3]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {seg[3]}] 
+set_property PACKAGE_PIN U5 [get_ports {seg[4]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {seg[4]}] 
+set_property PACKAGE_PIN V5 [get_ports {seg[5]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {seg[5]}] 
+set_property PACKAGE_PIN U7 [get_ports {seg[6]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {seg[6]}] 
+set_property PACKAGE_PIN V7 [get_ports dp]  	 	 	 	  
+ 	set_property IOSTANDARD LVCMOS33 [get_ports dp] 
+set_property PACKAGE_PIN U2 [get_ports {an[0]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {an[0]}] 
+set_property PACKAGE_PIN U4 [get_ports {an[1]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {an[1]}] 
+set_property PACKAGE_PIN V4 [get_ports {an[2]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {an[2]}] 
+set_property PACKAGE_PIN W4 [get_ports {an[3]}] 	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {an[3]}] 
+
+#Buttons 
+set_property PACKAGE_PIN W19 [get_ports {sw_input1}]  	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {sw_input1}] 
+set_property PACKAGE_PIN T17 [get_ports {sw_input2}]  	 	 	 	 	 
+ 	set_property IOSTANDARD LVCMOS33 [get_ports {sw_input2}] 
+
+  
+##Pmod Header JA 
+##Sch name = JA1 
+#set_property PACKAGE_PIN J1 [get_ports {JA[0]}] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[0]}] 
+##Sch name = JA2 
+#set_property PACKAGE_PIN L2 [get_ports {JA[1]}] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[1]}] 
+##Sch name = JA3 
+#set_property PACKAGE_PIN J2 [get_ports {JA[2]}] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[2]}] 
+##Sch name = JA4 
+#set_property PACKAGE_PIN G2 [get_ports {JA[3]}] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[3]}] 
+##Sch name = JA7 
+#set_property PACKAGE_PIN H1 [get_ports {JA[4]}] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[4]}] 
+##Sch name = JA8 
+#set_property PACKAGE_PIN K2 [get_ports {JA[5]}] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[5]}] 
+##Sch name = JA9 
+#set_property PACKAGE_PIN H2 [get_ports {JA[6]}] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[6]}] 
+##Sch name = JA10 
+#set_property PACKAGE_PIN G3 [get_ports {JA[7]}] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[7]}] 
+##Pmod Header JB 
+##Sch name = JB1 
+#set_property PACKAGE_PIN A14 [get_ports {JB[0]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[0]}] 
+##Sch name = JB2 
+#set_property PACKAGE_PIN A16 [get_ports {JB[1]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[1]}] 
+##Sch name = JB3 
+#set_property PACKAGE_PIN B15 [get_ports {JB[2]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[2]}] ##Sch name = JB4 
+#set_property PACKAGE_PIN B16 [get_ports {JB[3]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[3]}] 
+##Sch name = JB7 
+#set_property PACKAGE_PIN A15 [get_ports {JB[4]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[4]}] 
+##Sch name = JB8 
+#set_property PACKAGE_PIN A17 [get_ports {JB[5]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[5]}] 
+##Sch name = JB9 
+#set_property PACKAGE_PIN C15 [get_ports {JB[6]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[6]}] 
+##Sch name = JB10  
+#set_property PACKAGE_PIN C16 [get_ports {JB[7]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[7]}] 
+  
+##Pmod Header JC 
+##Sch name = JC1 
+#set_property PACKAGE_PIN K17 [get_ports {JC[0]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[0]}] 
+##Sch name = JC2 
+#set_property PACKAGE_PIN M18 [get_ports {JC[1]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[1]}] 
+##Sch name = JC3 
+#set_property PACKAGE_PIN N17 [get_ports {JC[2]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[2]}] 
+##Sch name = JC4 
+#set_property PACKAGE_PIN P18 [get_ports {JC[3]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[3]}] 
+##Sch name = JC7 
+#set_property PACKAGE_PIN L17 [get_ports {JC[4]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[4]}] 
+##Sch name = JC8 
+#set_property PACKAGE_PIN M19 [get_ports {JC[5]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[5]}] 
+##Sch name = JC9 
+#set_property PACKAGE_PIN P17 [get_ports {JC[6]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[6]}] 
+##Sch name = JC10 
+#set_property PACKAGE_PIN R18 [get_ports {JC[7]}]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[7]}] 
+
+##Pmod Header JXADC 
+##Sch name = XA1_P 
+#set_property PACKAGE_PIN J3 [get_ports {JXADC[0]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[0]}] 
+##Sch name = XA2_P 
+#set_property PACKAGE_PIN L3 [get_ports {JXADC[1]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[1]}] 
+##Sch name = XA3_P 
+#set_property PACKAGE_PIN M2 [get_ports {JXADC[2]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[2]}] 
+##Sch name = XA4_P 
+#set_property PACKAGE_PIN N2 [get_ports {JXADC[3]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[3]}] 
+##Sch name = XA1_N 
+#set_property PACKAGE_PIN K3 [get_ports {JXADC[4]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[4]}] 
+##Sch name = XA2_N 
+#set_property PACKAGE_PIN M3 [get_ports {JXADC[5]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[5]}] 
+##Sch name = XA3_N 
+#set_property PACKAGE_PIN M1 [get_ports {JXADC[6]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[6]}] 
+##Sch name = XA4_N 
+#set_property PACKAGE_PIN N1 [get_ports {JXADC[7]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {JXADC[7]}] 
+
+##VGA Connector 
+#set_property PACKAGE_PIN G19 [get_ports {vgaRed[0]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaRed[0]}] 
+#set_property PACKAGE_PIN H19 [get_ports {vgaRed[1]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaRed[1]}] 
+#set_property PACKAGE_PIN J19 [get_ports {vgaRed[2]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaRed[2]}] 
+#set_property PACKAGE_PIN N19 [get_ports {vgaRed[3]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaRed[3]}] 
+#set_property PACKAGE_PIN N18 [get_ports {vgaBlue[0]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaBlue[0]}] 
+#set_property PACKAGE_PIN L18 [get_ports {vgaBlue[1]}] 	 	 	 	  		
+	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaBlue[1]}] 
+#set_property PACKAGE_PIN K18 [get_ports {vgaBlue[2]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaBlue[2]}] 
+#set_property PACKAGE_PIN J18 [get_ports {vgaBlue[3]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaBlue[3]}] 
+#set_property PACKAGE_PIN J17 [get_ports {vgaGreen[0]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaGreen[0]}] 
+#set_property PACKAGE_PIN H17 [get_ports {vgaGreen[1]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaGreen[1]}] 
+#set_property PACKAGE_PIN G17 [get_ports {vgaGreen[2]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaGreen[2]}] 
+#set_property PACKAGE_PIN D17 [get_ports {vgaGreen[3]}]  	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {vgaGreen[3]}] 
+#set_property PACKAGE_PIN P19 [get_ports Hsync] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports Hsync] 
+#set_property PACKAGE_PIN R19 [get_ports Vsync] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports Vsync] 
+
+##USB-RS232 Interface 
+#set_property PACKAGE_PIN B18 [get_ports RsRx] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports RsRx] 
+#set_property PACKAGE_PIN A18 [get_ports RsTx] 	 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports RsTx] 
+
+##USB HID (PS/2) 
+#set_property PACKAGE_PIN C17 [get_ports PS2Clk] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports PS2Clk] 
+ 	#set_property PULLUP true [get_ports PS2Clk] 
+#set_property PACKAGE_PIN B17 [get_ports PS2Data]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports PS2Data] 	 
+ 	#set_property PULLUP true [get_ports PS2Data] 
+
+##Quad SPI Flash 
+##Note that CCLK_0 cannot be placed in 7 series devices. You can access it using the 
+##STARTUPE2 primitive. 
+#set_property PACKAGE_PIN D18 [get_ports {QspiDB[0]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {QspiDB[0]}] 
+#set_property PACKAGE_PIN D19 [get_ports {QspiDB[1]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {QspiDB[1]}] 
+#set_property PACKAGE_PIN G18 [get_ports {QspiDB[2]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {QspiDB[2]}] 
+#set_property PACKAGE_PIN F18 [get_ports {QspiDB[3]}] 	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports {QspiDB[3]}] 
+#set_property PACKAGE_PIN K19 [get_ports QspiCSn]  	 	 	 	 
+ 	#set_property IOSTANDARD LVCMOS33 [get_ports QspiCSn] 
+ 
+`timescale 1ns / 1ps
+
+module mux2 #(parameter WIDTH = 8)
+             (input  logic[WIDTH-1:0] d0, d1,  
+              input  logic s, 
+              output logic[WIDTH-1:0] y);
+  
+   assign y = s ? d1 : d0; 
+endmodule`timescale 1ns / 1ps
+
+module signext (input  logic[15:0] a,
+                output logic[31:0] y);
+              
+  assign y = {{16{a[15]}}, a};    // sign-extends 16-bit a
+endmodule
+`timescale 1ns / 1ps
+
+module sl2 (input  logic[31:0] a,
+            output logic[31:0] y);
+     
+     assign y = {a[29:0], 2'b00}; // shifts left by 2
+endmodule`timescale 1ns / 1ps
+
+module adder (input  logic[31:0] a, b,
+              output logic[31:0] y);
+     
+     assign y = a + b;
+endmodule`timescale 1ns / 1ps
+
+module regfile (input    logic clk, reset, we3, 
+                input    logic[4:0]  ra1, ra2, ra3, wa3, 
+                input    logic[31:0] wd3, 
+                output   logic[31:0] rd1, rd2, rd3);
+
+  logic [31:0] rf [31:0];
+
+  // three ported register file: read two ports combinationally
+  // write third port on falling edge of clock. Register0 hardwired to 0.
+
+  always_ff @(negedge clk)
+     if (we3) 
+         rf [wa3] <= wd3;
+  	 else if(reset)
+       for (int i=0; i<32; i++) rf[i] = {32{1'b0}};	
+
+  assign rd1 = (ra1 != 0) ? rf [ra1] : 0;
+  assign rd2 = (ra2 != 0) ? rf[ ra2] : 0;
+  assign rd3 = (ra3 != 0) ? rf[ ra3] : 0;
+
+endmodule`timescale 1ns / 1ps
+
+module mux2 #(parameter WIDTH = 8)
+             (input  logic[WIDTH-1:0] d0, d1,  
+              input  logic s, 
+              output logic[WIDTH-1:0] y);
+  
+   assign y = s ? d1 : d0; 
+endmodule`timescale 1ns / 1ps
+
+
+module alu(input  logic [31:0] a, b, 
+           input  logic [2:0]  alucont, 
+           output logic [31:0] result);
+    
+    always_comb
+        case(alucont)
+            3'b010: result = a + b;
+            3'b011: result = a << b;
+            3'b100: result = a >> b;
+            3'b110: result = a - b;
+            3'b000: result = a & b;
+            3'b001: result = a | b;
+            3'b111: result = (a < b) ? 1 : 0;
+            default: result = {32{1'bx}};
+        endcase
+
+endmodule`timescale 1ns / 1ps
+
+module dmem (input  logic        clk, we,
+             input  logic[31:0]  a, wd,
+             output logic[31:0]  rd);
+
+   logic  [31:0] RAM[63:0];
+  
+   assign rd = RAM[a[31:2]];    // word-aligned  read (for lw)
+
+   always_ff @(posedge clk)
+     if (we)
+       RAM[a[31:2]] <= wd;      // word-aligned write (for sw)
+
+endmodule

@@ -1,0 +1,195 @@
+CS224
+Lab No: 2
+Section No: 4
+Seçkin Alp Kargı
+22001942
+09/10/2023
+
+Preliminary Work
+--------------------------------------------------------------------------------
+.data
+	FreqTable: .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.align 2
+	soru1: .asciiz "Enter the array length (0-100): "
+	soru2: .asciiz "Enter Value:  "
+	soru3: .asciiz "\n"
+	virgul: .asciiz ", "
+	soru4: .asciiz "Array:  "
+	soru5: .asciiz "Freq Table:  "
+	
+.text
+Main:
+	jal CreateArray
+	addi $s4,$zero,0 #counter
+	add $s0, $v0, $zero # array adress to $s0
+	add $a1, $v0, $zero # array adress to $a1
+	add $a2, $v1, $zero # array size * 4
+	
+	li $v0,4
+	la $a0, soru4
+	syscall
+print:
+	 # s0 array pointer
+	lw $s7, 0($s0)
+	 	
+	li $v0,1
+	add $a0, $zero, $s7
+	syscall
+	
+	li $v0,4
+	la $a0, virgul
+	syscall
+	
+	addi $s0,$s0, 4 
+	addi $s4,$s4, 4
+	bge  $s4, $a2 endPrint	
+		
+	j print
+endPrint:
+	li $v0,4
+	la $a0, soru3
+	syscall
+	
+	la $a0, FreqTable
+	jal FindFreq
+	add $s0, $v0, $zero
+	add $a2,$zero , 44
+	addi $s4,$zero,0
+	
+	li $v0,4
+	la $a0, soru5
+	syscall
+	
+print2:
+	lw $s7, 0($s0)
+	
+	li $v0,1
+	add $a0, $zero, $s7
+	syscall
+	
+	li $v0,4
+	la $a0, virgul
+	syscall
+	
+	addi $s0,$s0, 4 
+	addi $s4,$s4, 4
+	bge  $s4, $a2 endprint2
+		
+	j print2
+endprint2:	
+	li $v0, 10
+    	syscall
+    		
+FindFreq:
+	#a0 findfreq adree
+	#a1 array adres
+	#a2 array size
+	
+	
+	add $s2, $zero, $zero
+	
+	add $s3, $s7,$zero #array adress
+	add $s4, $zero, $a0
+	add $s6, $zero, $a1
+	add $s0, $zero, $a2
+xxx:	
+	add $s4, $zero, $a0
+	lw $s5, 0($s6)
+	ble $s5,9, go11
+	
+	
+	add $s4,$s4, 40
+	lw $s7,0($s4)
+	addi $s7,$s7,1
+	sw $s7, 0($s4)
+	
+	
+	add $s2,$s2,4
+	add $s6,$s6,4
+	bge $s2,$s0,donee
+	j xxx
+go11:
+	mul  $s5,$s5,4
+	add $s4,$s4,$s5
+	lw $s7,0($s4)
+	addi $s7,$s7,1
+	sw $s7, 0($s4)
+	
+	
+	add $s2,$s2,4
+	add $s6,$s6,4
+	bge $s2,$s0,donee
+	j xxx
+	
+donee:	
+	add $v0, $a0, $zero
+	jr $ra
+
+
+
+CreateArray:
+
+	addi $sp, $sp,-4
+	sw $ra, 0($sp)
+	
+	li $v0, 4
+	la $a0, soru1
+	syscall
+	
+	li $v0, 5
+	syscall
+	
+	sll $v0, $v0, 2
+	addi $a0,$v0, 0
+	addi $a3, $v0, 0
+	# a3 array size
+	
+	li $v0, 9
+	syscall
+        add $a2, $v0, $zero #array pointer
+        
+        add $v0, $a2, 0
+	add $v1, $a3, 0
+	
+        jal init
+        
+	lw $ra, 0($sp)
+	addi $sp, $sp,4
+        
+        jr $ra
+        
+ init:  
+ 	addi $sp, $sp, -12
+ 	
+ 	sw $s0, 0($sp)
+	sw $s2, 4($sp)
+	sw $ra, 8($sp)
+	
+ 	add $s2, $v1,$zero
+        add $s0, $v0, $zero
+a:
+ 	li $v0, 4
+	la $a0, soru2
+	syscall
+        
+  	li $v0, 5
+	syscall	
+	
+        sw $v0, 0($s0)
+        
+        addi $s0,$s0,4
+        add $s2, $s2 ,-4
+        beq $s2, $zero, done
+        
+        j a
+done:
+	add $v0, $a2, 0
+	add $v1, $a3, 0
+	lw $s0, 0($sp)
+	lw $s2, 4($sp)
+	lw $ra, 8($sp)
+	addi $sp, $sp, 12
+	jr $ra
+----------------------------------------------------------------------------------------
+	
+	

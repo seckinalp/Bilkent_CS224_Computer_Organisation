@@ -1,0 +1,381 @@
+CS224
+Lab No: 2
+Section No: 4
+Seçkin Alp Kargı
+22001942
+13.10.2023
+
+Prelim
+-----------------------------------------------------------------------------------------
+.data
+	FreqTable: .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.align 2
+	soru1: .asciiz "Enter the array length (0-100): "
+	soru2: .asciiz "Enter Value:  "
+	soru3: .asciiz "\n"
+	virgul: .asciiz ", "
+	soru4: .asciiz "Array:  "
+	soru5: .asciiz "Freq Table:  "
+	
+.text
+Main:
+	jal CreateArray
+	addi $s4,$zero,0 #counter
+	add $s0, $v0, $zero # array adress to $s0
+	add $a1, $v0, $zero # array adress to $a1
+	add $a2, $v1, $zero # array size * 4
+	
+	add $v0, $zero, 4
+	la $a0, soru4
+	syscall
+print:
+	 # s0 array pointer
+	lw $s7, 0($s0)
+	 	
+	add $v0, $zero,1
+	add $a0, $zero, $s7
+	syscall
+	
+	add $v0, $zero,,4
+	la $a0, virgul
+	syscall
+	
+	addi $s0,$s0, 4 
+	addi $s4,$s4, 4
+	bge  $s4, $a2 endPrint	
+		
+	j print
+endPrint:
+	add $v0, $zero,4
+	la $a0, soru3
+	syscall
+	
+	la $a0, FreqTable
+	jal FindFreq
+	add $s0, $v0, $zero
+	add $a2,$zero , 44
+	addi $s4,$zero,0
+	
+	add $v0, $zero,4
+	la $a0, soru5
+	syscall
+	
+print2:
+	lw $s7, 0($s0)
+	
+	add $v0, $zero,1
+	add $a0, $zero, $s7
+	syscall
+	
+	add $v0, $zero,4
+	la $a0, virgul
+	syscall
+	
+	addi $s0,$s0, 4 
+	addi $s4,$s4, 4
+	bge  $s4, $a2 endprint2
+		
+	j print2
+endprint2:	
+	add $v0, $zero, 10
+    	syscall
+    		
+FindFreq:
+	#a0 findfreq adree
+	#a1 array adres
+	#a2 array size
+	
+	
+	add $s2, $zero, $zero
+	
+	add $s3, $s7,$zero #array adress
+	add $s4, $zero, $a0
+	add $s6, $zero, $a1
+	add $s0, $zero, $a2
+xxx:	
+	add $s4, $zero, $a0
+	lw $s5, 0($s6)
+	ble $s5,9, go11
+	
+	
+	add $s4,$s4, 40
+	lw $s7,0($s4)
+	addi $s7,$s7,1
+	sw $s7, 0($s4)
+	
+	
+	add $s2,$s2,4
+	add $s6,$s6,4
+	bge $s2,$s0,donee
+	j xxx
+go11:
+	mul  $s5,$s5,4
+	add $s4,$s4,$s5
+	lw $s7,0($s4)
+	addi $s7,$s7,1
+	sw $s7, 0($s4)
+	
+	
+	add $s2,$s2,4
+	add $s6,$s6,4
+	bge $s2,$s0,donee
+	j xxx
+	
+donee:	
+	add $v0, $a0, $zero
+	jr $ra
+
+
+
+CreateArray:
+
+	addi $sp, $sp,-4
+	sw $ra, 0($sp)
+	
+	add $v0, $zero, 4
+	la $a0, soru1
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	sll $v0, $v0, 2
+	addi $a0,$v0, 0
+	addi $a3, $v0, 0
+	# a3 array size
+	
+	add $v0, $zero, 9
+	syscall
+        add $a2, $v0, $zero #array pointer
+        
+        add $v0, $a2, 0
+	add $v1, $a3, 0
+	
+        jal init
+        
+	lw $ra, 0($sp)
+	addi $sp, $sp,4
+        
+        jr $ra
+        
+ init:  
+ 	addi $sp, $sp, -12
+ 	
+ 	sw $s0, 0($sp)
+	sw $s2, 4($sp)
+	sw $ra, 8($sp)
+	
+ 	add $s2, $v1,$zero
+        add $s0, $v0, $zero
+a:
+ 	add $v0, $zero, 4
+	la $a0, soru2
+	syscall
+        
+  	add $v0, $zero, 5
+	syscall	
+	
+        sw $v0, 0($s0)
+        
+        addi $s0,$s0,4
+        add $s2, $s2 ,-4
+        beq $s2, $zero, done
+        
+        j a
+done:
+	add $v0, $a2, 0
+	add $v1, $a3, 0
+	lw $s0, 0($sp)
+	lw $s2, 4($sp)
+	lw $ra, 8($sp)
+	addi $sp, $sp, 12
+	jr $ra
+
+----------------------------------------------------------------------------------------
+Lab 1. Hamming Distance Between Registers
+------------------------------------------------------------------------------------------
+.data
+	soru1: .asciiz "Enter the first number: "
+	soru2: .asciiz"Enter the second number: "
+	text: .asciiz"Hamming distance: "
+	text6: .asciiz"\nHamming distance: "
+	text2: .asciiz"\n1. Make a new calculation\n2. Quit\nChoice (1-2): "
+	text3: .asciiz"\nNumber 1 Hex: "
+	text4: .asciiz"\nNumber 2 Hex: "
+.text
+
+Main: 
+	jal TakeValues
+	
+	add $v0, $zero, 4
+	la $a0, text2
+	syscall
+
+	add $v0, $zero, 5
+	syscall
+	
+	add $s0, $v0, $zero
+	add $s1, $zero, 1
+	bne $s0, $s1, finish
+	j Main
+finish:
+	add $v0, $zero, 10
+    	syscall
+    	
+TakeValues:
+	addi $sp, $sp,-4
+	sw $ra, 0($sp)
+	
+	add $v0, $zero, 4
+	la $a0, soru1
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	add $s0, $v0, $zero #s0, number 1
+	add $s7, $v0, $zero
+	add $v0, $zero, 4
+	la $a0, soru2
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	add $s1, $v0, $zero #s1, number 2
+	add $s6, $v0, $zero
+    
+	jal CalculateHammingDistance
+	lw $ra, 0($sp)
+	addi $sp, $sp,4
+	jr $ra
+	
+CalculateHammingDistance:
+
+	add $s3, $zero, $zero # hamming counter
+	
+	beq $s0,$s1,endCalculation # if equal 0
+	xor $s5, $s0, $s1
+
+calculation:
+	andi  $s4, $s5, 1 #checking for last bit
+	beq  $s4, $zero, devam #zero ise ekleme yapma
+	addi $s3,$s3,1 #0 de?ilse counter? 1 artt?r
+	
+devam:	
+	srl $s5,$s5,1 #shift
+	beq $s5, $zero, endCalculation #end loop
+	
+	j calculation
+	
+endCalculation:
+	
+	add $v0, $zero, 4 #printing in hex format
+   	la $a0, text3
+    	syscall
+    	
+	add $v0, $zero, 34 #printing in hex format
+   	add $a0, $zero, $s7
+    	syscall
+	
+	add $v0, $zero, 4 #printing in hex format
+   	la $a0, text4
+    	syscall
+    	add $v0, $zero, 34 #printing in hex format
+   	add $a0, $zero, $s6
+    	syscall
+	
+	add $v0, $zero, 4 #printing in hex format
+   	la $a0, text6
+    	syscall
+	add $v0, $zero, 1 #printing in hex format
+   	add $a0, $zero, $s3
+    	syscall
+
+	jr $ra
+
+------------------------------------------------------------------------------------------
+Lab 2. Reverse Register Content
+------------------------------------------------------------------------------------------
+.data
+	soru1: .asciiz "Enter the number for reverse it: "
+	soru2: .asciiz "Original Hex: "
+	text: .asciiz"\nReverse Hex: "
+	text2: .asciiz"\n1. Make a new calculation\n2. Quit\nChoice (1-2): "
+.text
+
+
+Main: 
+	jal TakeValues
+	
+	add $v0, $zero, 4
+	la $a0, text2
+	syscall
+
+	add $v0, $zero, 5
+	syscall
+	
+	add $s0, $v0, $zero
+	add $s1, $zero, 1
+	bne $s0, $s1, finish
+	j Main
+finish:
+	add $v0, $zero, 10
+    	syscall
+    	
+TakeValues:
+	addi $sp, $sp,-4
+	sw $ra, 0($sp)
+	
+	add $v0, $zero, 4
+	la $a0, soru1
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	add $s0, $v0, $zero #s0, number 1
+	
+	add $v0, $zero, 4
+	la $a0, soru2
+	syscall
+	
+	add $v0, $zero, 34 #printing in hex format
+   	add $a0, $zero, $s0
+    	syscall  
+    	
+    	add $a0, $zero, $s0 #a0, number 1  
+	jal CalculateReverse
+	lw $ra, 0($sp)
+	addi $sp, $sp,4
+	jr $ra
+	
+CalculateReverse:
+    	add $s2,$zero, 0
+    	add $s4,$zero, 32
+	add $s1,$zero, 0  # hex reverse
+
+calculation:
+    	
+    	sll $s1, $s1, 1
+    	and $s3, $s0, 1
+    	or $s1, $s1, $s3 
+    	
+      	add $s2, $s2, 1 
+    	srl $s0, $s0, 1   
+    
+    	beq $s2, $s4, endCalculation 
+	j calculation
+endCalculation:
+	
+	add $v0, $zero, 4
+	la $a0, text
+	syscall
+	
+	add $v0, $zero, 34 #printing in hex format
+   	add $a0, $zero, $s1
+    	syscall
+
+	jr $ra
+
+------------------------------------------------------------------------------------------

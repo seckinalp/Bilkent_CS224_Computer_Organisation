@@ -1,0 +1,299 @@
+CS224
+Lab No: 1
+Section No: 4
+Seçkin Alp Kargı
+22001942
+04/10/2023
+
+1. Swap Array:
+------------------------------------------------------------------------------
+.data
+	sayilar: .space 80
+	.align 2
+	yenisatir: .asciiz "\n"
+	bosluk: .asciiz ", "
+	nokta: .asciiz "."
+	soru1: .asciiz "Enter the array length (0-20): "
+	soru2: .asciiz "Enter a integer value: "
+	text1: .asciiz "Original Array: "
+	text2: .asciiz "Reverse Array: "
+	text3: .asciiz "Array length must be between 0 - 20 ! "
+	
+.text
+
+
+getArraySize:
+	
+	li $v0, 4
+	la $a0, text3
+	syscall
+	
+	#soru 1
+	la $a0, soru1
+	syscall
+	
+	# Get Array size
+	li $v0, 5
+	syscall
+	move $t0, $v0
+	
+	addi $t6, $zero, 0
+	addi $t7, $zero, 20
+	
+	bgt $t0,$t7, getArraySize
+	blt $t0,$t6, getArraySize
+	#for
+	li $t7, 1 #counter
+	addi $t6, $zero,0
+	lw $t5, sayilar
+	
+	#t0 - array size
+	#t7 - counter
+	#t6 - index
+	
+arraydoldurma:	
+
+	bgt $t7, $t0, endArraydoldurma
+	
+	#soru 2
+	li $v0, 4
+	la $a0, soru2
+	syscall
+	
+	# Get number for Array 
+	li $v0, 5
+	syscall
+	
+	move $t1, $v0 
+	
+	#t1 - array value
+	
+	sw $t1, sayilar($t6)
+	addi $t6,$t6,4
+	
+	addi $t7,$t7,1 # Counter increment
+	j arraydoldurma # Jump to begining of loop
+endArraydoldurma:	
+
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	#print original array
+	addi $t2,$zero,0
+	addi $t1,$zero,0
+	li $v0, 4
+	la $a0, text1
+	syscall
+	
+yazdirma:
+	
+	lb $t6, sayilar($t2)
+		
+	addi $t2,$t2, 4 
+	addi $t1,$t1, 1
+	 	
+	li $v0,1
+	move $a0, $t6
+	syscall
+	
+	beq $t1, $t0 endYazdirma	
+	li $v0, 4
+	la $a0, bosluk
+	syscall
+		
+	j yazdirma
+endYazdirma:
+
+	li $v0, 4
+	la $a0, nokta
+	syscall
+	
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	#Reverse Loop
+   	la $t1, sayilar
+    	add $t6, $zero, $t0
+    	sll $t6, $t6, 2
+    	add $t2, $t1,$t6
+    	subi $t2, $t2, 4
+    	
+reverse:
+	
+	 
+    	lw $t4, ( $t1)  
+    	lw $t7, ($t2)
+    	
+    	 sw  $t7, ($t1)
+    	sw $t4 , ($t2) 
+    	
+	subi $t2, $t2,  4
+    	addi $t1 , $t1 ,4
+	
+	ble   $t2 , $t1, endReverse
+	
+    	j  reverse
+endReverse:
+
+	li $v0, 4
+	la $a0, text2
+	syscall
+	
+	addi $t2,$zero,0
+	addi $t1,$zero,0
+	
+yazdirma2:
+	
+	
+	lb $t6, sayilar($t2)
+		
+	addi $t2,$t2, 4 
+	addi $t1,$t1, 1
+	 	
+	li $v0,1
+	move $a0, $t6
+	syscall
+	
+	beq $t1, $t0 endYazdirma2	
+	li $v0, 4
+	la $a0, bosluk
+	syscall
+		
+	j yazdirma2
+endYazdirma2:
+	
+	li $v0, 4
+	la $a0, nokta
+	syscall
+	#exit
+	li $v0, 10
+	syscall
+	
+---------------------------------------------------------------------------------------
+
+2. Calculation:
+
+-----------------------------------------------------------------------------------
+.data
+	text: .asciiz "You will input 3 integer values for this calculation."
+	text1: .asciiz "The result is: "
+	text2: .asciiz "Input the B value: "
+	text3: .asciiz "Input the C value: "
+	text4: .asciiz "Input the D value: "
+	text5: .asciiz "\nThe calculation A = (B / C + D Mod B - C) / B involves the division of B by C, the modulo operation of D by B, and subsequent addition, subtraction, and division operations.\nThe final result is the division of the entire expression by B."
+	yenisatir: .asciiz "\n" 
+.text
+	li $v0, 4
+	la $a0, text
+	syscall
+	
+	la $a0, yenisatir
+	syscall
+	
+	la $a0, text2
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t1, $v0
+	
+	li $v0, 4
+	la $a0, text3
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t2, $v0
+	
+	li $v0, 4
+	la $a0, text4
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t3, $v0
+	
+	
+	li $t7,0
+	
+	move $t5, $t1
+divc:	
+	sub $t1, $t1, $t2
+	addi $t7,$t7,1
+	bgt $t1, $t2, divc
+	
+	move $t1,  $t5
+	
+	
+	
+	li $v0, 1
+	move $a0, $t7
+	syscall
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	move $t5,  $t3
+modc:
+	sub $t3,$t3,$t1
+	bgt $t3,$t1,modc
+	move $t6, $t3
+	move $t3,  $t5
+	
+	li $v0, 1
+	move $a0, $t6
+	syscall
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	add $t7, $t7, $t6
+	sub $t7, $t7, $t2
+	
+	
+	
+	li $v0, 1
+	move $a0, $t7
+	syscall
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	li $t6,0
+divc2:	
+	sub $t7,$t7,$t1
+	addi $t6,$t6,1
+	bgt $t7,$t1,divc2
+	
+	li $v0, 1
+	move $a0, $t6
+	syscall
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	li $v0, 4
+	la $a0, text1
+	syscall
+	
+	li $v0, 1
+	move $a0, $t6
+	syscall
+	
+	li $v0, 4
+	la $a0, text5
+	syscall
+	
+	li $v0, 10
+	syscall
+	
+-------------------------------------------------------------------------------------
+	
+	
+	
+	
+	
+	
+	

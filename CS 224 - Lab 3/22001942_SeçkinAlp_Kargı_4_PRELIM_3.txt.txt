@@ -1,0 +1,433 @@
+CS224
+Lab No: 3
+Section No: 4
+Seçkin Alp Kargı
+22001942
+24/10/2023
+
+Preliminary Work Part A
+--------------------------------------------------------------------------------
+.data
+	line:	
+	.asciiz "\n --------------------------------------"
+
+nodeNumberLabel:
+	.asciiz	"\n Node No.: "
+	
+addressOfCurrentNodeLabel:
+	.asciiz	"\n Address of Current Node: "
+	
+addressOfNextNodeLabel:
+	.asciiz	"\n Address of Next Node: "
+	
+dataValueOfCurrentNode:
+	.asciiz	"\n Data Value of Current Node: "
+	
+keyValueOfCurrentNode:
+	.asciiz	"\n Key Value of Current Node: "
+	
+	soru1: .asciiz "\nHow many node do you want to create: "
+	soru2: .asciiz "\nKey Value: "
+	soru3: .asciiz "Data Value: "
+	text: .asciiz "\n\n\n Summary Linked List: "
+	
+
+.text
+	
+	jal	ListCreation
+	
+	add	$a0, $zero, $v0
+	
+	jal printLinkedList
+	
+	add $a0, $zero, $v0
+	
+	jal summaryList
+	add	$a0,$zero, $v0
+	
+	jal printLinkedList
+	
+	add	$v0, $zero, 10
+	syscall
+	
+	ListCreation:
+	
+
+	
+# $v0: returns list head
+# Node 1 contains 4 in the data field, node i contains the value 4*i in the data field.
+# By inserting a data value like this
+# when we print linked list we can differentiate the node content from the node sequence no (1, 2, ...).
+	addi	$sp, $sp, -28
+	sw	$s5, 24($sp)
+	sw	$s0, 20($sp)
+	sw	$s1, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s3, 8($sp)
+	sw	$s4, 4($sp)
+	sw	$ra, 0($sp) 	# Save $ra just in case we may want to call a subprogram
+	
+	la $a0, soru1
+	add $v0, $zero, 4
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	add $s0, $zero, $v0 #s0 node number
+	add $s1,$zero, 0 #node counter
+
+	la $a0, soru2
+	add $v0, $zero, 4
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	add $s4, $zero, $v0 #s4 key value
+	la $a0, soru3
+	add $v0,$zero, 4
+	syscall
+	
+	add $v0,$zero, 5
+	syscall
+	
+	add $s5, $zero, $v0 #s5 data value
+	
+	add	$a0,$zero, 12
+	add	$v0,$zero, 9
+	syscall
+	add	$s2,$zero, $v0
+	add	$s3,$zero, $v0
+	
+	sw	$s4, 0($s2)
+	sw	$s5, 4($s2)	
+	
+	addi $s1,$s1,1
+create:
+	beq $s1, $s0, donee
+	addi $s1,$s1,1
+	
+	la $a0, soru2
+	add $v0, $zero, 4
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	add $s4,$zero, $v0 #s4 key value
+	la $a0, soru3
+	add $v0, $zero, 4
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	add $s5,$zero, $v0 #s5 data value
+	
+	add	$a0, $zero, 12
+	add	$v0, $zero, 9
+	syscall
+	sw	$v0, 8($s2)
+	add	$s2, $zero, $v0
+	sw	$s4, 0($s2)
+	sw	$s5, 4($s2)	
+	
+	j create
+donee:
+	# Make sure that the link field of the last node cotains 0.
+# The last node is pointed by $s2.
+	sw	$zero, 8($s2)
+	add	$v0,$zero, $s3	# Now $v0 points to the list head ($s3).
+# Restore the register values
+	lw	$ra, 0($sp)
+	lw	$s4, 4($sp)
+	lw	$s3, 8($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 16($sp)
+	lw	$s0, 20($sp)
+	lw	$s5, 24($sp)
+	addi	$sp, $sp, 28
+	
+	jr	$ra
+	
+	
+	# $a0 list pointer
+summaryList: 
+		addi $sp,$sp,-32
+		sw $s7,28($sp)
+		sw $s6,24($sp)
+		sw $s5,20($sp)
+		sw $s4,16($sp)
+		sw $s0,12($sp)
+		sw $s1,8($sp)
+		sw $s2,4($sp)
+		sw $s3,0($sp)
+		
+		#points current node
+		add $s0,$zero, $a0
+		
+		add	$a0, $zero, 12
+		add	$v0,$zero, 9
+		add $s6, $zero,0
+		syscall
+		add	$s3,$zero, $v0
+		add	$s4,$zero, $v0
+		sw $zero, 0($s3)
+		sw $zero, 8($s3)
+	next: 
+		beq $s0, $zero, done
+		
+		lw $s1, 0($s0)
+		lw $s2, 4($s0)
+
+	next2:
+		beq $s6, $zero, createfirst
+		beq $s3, $zero,createnode
+		lw $s5, 0($s3)
+		beq $s5,$s1,addnode
+		
+		add $a1, $zero,$s3
+		lw $s3, 8($s3)
+		j next2
+	createfirst:
+		add $s6,$s6 ,1
+		sw $s1,0($s3)
+		sw $s2,4($s3)
+		sw $zero, 8($s3)
+		add $s3,$zero, $s4
+		j don
+		
+	createnode:
+		add $s3,$zero, $a1
+		add	$a0,$zero, 12
+		add	$v0,$zero, 9
+		syscall
+		sw $v0, 8($s3)
+		add $s3,$zero, $v0
+		sw $s1,0($s3)
+		sw $s2,4($s3)
+		sw $zero, 8($s3)
+		add $s3,$zero, $s4
+		j don
+	addnode:
+		lw $s7, 4($s3)
+		add $s7,$s2,$s7
+		sw $s7, 4($s3)
+		add $s3, $zero,$s4
+	don:	
+		lw $s0, 8($s0)
+		j next
+	done:
+		la	$a0, text
+		add	$v0,$zero, 4
+		syscall
+		add $v0,$zero, $s4
+		lw $s3, 0($sp)
+		lw $s2, 4($sp)
+		lw $s1, 8($sp)
+		lw $s0, 12($sp)
+		lw $s4, 16($sp)
+		lw $s5, 20($sp)
+		lw $s6, 24($sp)
+		lw $s7, 28($sp)
+		addi $sp, $sp , 32
+		jr $ra
+printLinkedList:
+# Print linked list nodes in the following format
+# --------------------------------------
+# Node No: xxxx (dec)
+# Address of Current Node: xxxx (hex)
+# Address of Next Node: xxxx (hex)
+# Data Value of Current Node: xxx (dec)
+# --------------------------------------
+
+# Save $s registers used
+	addi	$sp, $sp, -28
+	sw 	$s5, 24($sp)
+	sw 	$s4, 20($sp)
+	sw	$s0, 16($sp)
+	sw	$s1, 12($sp)
+	sw	$s2, 8($sp)
+	sw	$s3, 4($sp)
+	sw	$ra, 0($sp) 	# Save $ra just in case we may want to call a subprogram
+
+# $a0: points to the linked list.
+# $s0: Address of current
+# s1: Address of next
+# $2: Data of current
+# $s3: Node counter: 1, 2, ...
+	add $s0,$zero, $a0	# $s0: points to the current node.
+	add   $s3,$zero, 0
+	add $s5,$zero,$a0
+printNextNode:
+	beq	$s0, $zero, printedAll
+				# $s0: Address of current node
+	lw	$s1, 8($s0)	# $s1: Address of  next node
+	lw	$s2, 4($s0)	# $s2: Data of current node
+	lw	$s4, 0($s0)	# s4: Key of current node
+	addi	$s3, $s3, 1
+# $s0: address of current node: print in hex.
+# $s1: address of next node: print in hex.
+# $s2: data field value of current node: print in decimal.
+	la	$a0, line
+	add	$v0,$zero, 4
+	syscall		# Print line seperator
+	
+	la	$a0, nodeNumberLabel
+	add	$v0,$zero, 4
+	syscall
+	
+	add	$a0,$zero, $s3	# $s3: Node number (position) of current node
+	add	$v0,$zero, 1
+	syscall
+	
+	la	$a0, addressOfCurrentNodeLabel
+	add	$v0,$zero, 4
+	syscall
+	
+	add	$a0,$zero, $s0	# $s0: Address of current node
+	add	$v0,$zero, 34
+	syscall
+
+	la	$a0, addressOfNextNodeLabel
+	add	$v0,$zero, 4
+	syscall
+	
+	add	$a0,$zero, $s1	# $s0: Address of next node
+	add	$v0,$zero, 34
+	syscall	
+	
+	la	$a0, keyValueOfCurrentNode
+	add	$v0,$zero, 4
+	syscall
+		
+	add	$a0,$zero, $s4	# $s4: key value of current node
+	add	$v0,$zero, 1		
+	syscall	
+	
+	la	$a0, dataValueOfCurrentNode
+	add	$v0,$zero, 4
+	syscall
+		
+	add	$a0,$zero, $s2	# $s2: Data of current node
+	add	$v0,$zero, 1		
+	syscall	
+	
+
+	
+# Now consider next node.
+	add	$s0,$zero, $s1	# Consider next node.
+	j	printNextNode
+printedAll:
+# Restore the register values
+	add $v0,$zero, $s5
+	lw	$ra, 0($sp)
+	lw	$s3, 4($sp)
+	lw	$s2, 8($sp)
+	lw	$s1, 12($sp)
+	lw	$s0, 16($sp)
+	lw	$s4, 20($sp)
+	lw	$s5, 24($sp)
+	addi	$sp, $sp, 24
+	jr	$ra
+
+----------------------------------------------------------------------------------------
+Preliminary Work Part B
+--------------------------------------------------------------------------------
+.data
+	soru1: .asciiz "\n\nEnter a number of a register (0-31): "
+	text: .asciiz "Number of Using of this Register: "
+	yenisatir: .asciiz "\n"
+.text
+
+main:
+	jal function
+	add $a0, $zero, $v0
+	jal counting	
+	j main
+	
+function:
+	addi	$sp, $sp, -8
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+
+again:
+	la $a0, soru1
+	add $v0 , $zero, 4
+	syscall
+	
+	add $v0, $zero, 5
+	syscall
+	
+	add $s0, $zero, $v0
+	
+	bgt  $s0, 31, exit
+	blt  $s0,0,exit
+		
+done:	
+	add $v0, $zero, 4
+	la $a0, text
+	syscall
+	add $v0, $zero, $s0
+	lw	$ra, 0($sp)
+	lw	$s0, 4($sp)
+	addi	$sp, $sp, 8
+	jr	$ra
+	
+exit:	
+	add $v0, $zero,10
+	syscall
+
+counting: 
+	addi	$sp, $sp, -32
+	sw	$s7, 28($sp)
+	sw	$s6, 24($sp)
+	sw	$s5, 20($sp)
+	sw	$s3, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s1, 8($sp)
+	sw	$s0, 4($sp)
+	sw	$ra, 0($sp)
+	
+	la	$s0, counting
+	la	$s1, finish
+	add $s2, $a0,$zero #desired register number
+	add $s3,$zero,$s3 #counter
+next: 
+	beq	$s0, $s1, quit
+	lw $s5, 0($s0)
+ 	lw $s6, 0($s0)
+	andi $s7, $s5, 0x001f0000
+	srl $s7, $s7,16
+	
+	bne  $s7,$s2,increase
+	add $s3,$s3,1
+increase:
+	andi $s7, $s6, 0x03e00000
+	srl $s7, $s7,21
+	
+	bne  $s7,$s2,increase2
+	add $s3,$s3,1
+increase2:	
+	addi	$s0, $s0, 4
+	j next
+quit:
+	la $a0, ($s3)
+	add $v0,$zero,1
+	syscall
+finish:
+	lw	$ra, 0($sp)
+	lw	$s0, 4($sp)
+	lw	$s1, 8($sp)
+	lw	$s2, 12($sp)
+	lw	$s3, 16($sp)
+	lw	$s5, 20($sp)
+	lw	$s6, 24($sp)
+	lw	$s7, 28($sp)
+	addi	$sp, $sp, 32
+	jr	$ra
+	
+
+----------------------------------------------------------------------------------------
+	

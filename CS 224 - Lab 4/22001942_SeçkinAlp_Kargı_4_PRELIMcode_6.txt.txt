@@ -1,0 +1,74 @@
+CS224
+Lab No: 6
+Section No: 4
+Seçkin Alp Kargı
+22001942
+06.12.2023
+
+-----------------------------------------------
+
+.data
+soru1: .asciiz "Enter the size of matrix N: "
+soru2: .asciiz "Sum of all elements: "
+soru3: .asciiz "\n"
+
+.align 2
+matrix: .space 400  
+
+
+.text
+main:
+
+  li $v0, 4
+  la $a0, soru1
+  syscall
+  li $v0, 5
+  syscall
+  add $s5, $zero, $v0
+  mul $v0,$v0,$v0
+  mflo $v0
+  move $t0, $v0 
+  mul $t0, $t0, $t0
+  la $t1, matrix 
+  andi $t1, $t1, 0xFFFFFFFC  
+  li $t2, 1 
+
+  starting:
+    beqz $t0, lap
+
+    sw $t2, 0($t1)  
+
+    addi $t1, $t1, 4 
+    addi $t2, $t2, 1  
+    addi $t0, $t0, -1  
+    addi $t5,$t5,0
+    j starting 
+    la $t1, matrix  
+    move $t2, $v0
+move $t6, $zero
+  
+    lap:
+      lw $a0, 0($t1)  
+      li $v0, 1
+      syscall
+      add  $t5,$t5,$a0
+      addi $t6, $t6,1
+      
+      rem $t7, $t6, $s5
+      bnez $t7, hebele
+      
+      li $v0, 4
+      la $a0, soru3
+      syscall
+hebele:
+      addi $t1, $t1, 4  
+      addi $t2, $t2, -1 
+      bgtz $t2, lap
+   li $v0, 4
+  la $a0, soru2
+  syscall
+  move $a0, $t5 
+  li $v0, 1
+  syscall
+  li $v0, 10
+  syscall

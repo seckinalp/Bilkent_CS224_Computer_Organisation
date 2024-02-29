@@ -1,0 +1,216 @@
+CS224
+Lab No: 6
+Section No: 4
+Seçkin Alp Kargı
+22001942
+8.12.2023
+.data
+
+soru1: .asciiz "Enter the size of the array: "
+soru2: .asciiz "\n1. Display desired elements of the matrix by specifying its row and column member \n2. Obtain summation of matrix elements row-major (row by row) summation \n3. Obtain summation of matrix elements column-major (column by column) summation \n4. Exit\nChoose 1-4: "
+soru3: .asciiz "Row: "
+soru4: .asciiz "Column: "
+soru5: .asciiz "Row by row summation: "
+soru6: .asciiz "Column by cokumn summation: "
+newline: .asciiz "\n"
+newline2: .asciiz " + "
+.text
+main:
+    	li $v0, 4
+   	 la $a0, soru1
+   	 syscall
+	
+   	 li $v0, 5
+   	syscall
+    	add $a1, $v0, 0
+   	mul $v0, $v0, $v0
+	move $t0, $v0
+	move $t1,$v0
+    	sll $t1, $t1, 2
+
+    	li $v0, 9
+    	move $a0, $t1
+    	syscall
+    	
+    	move $t2, $v0 
+	move $t5, $v0
+   	move $t6, $v0
+    	li $t3, 1
+    	li $t4, 0
+
+loop:
+   	 sw $t3, 0($t2) 	
+    	addi $t3, $t3, 1
+    	addi $t2, $t2, 4	
+   	 addi $t4, $t4, 1
+   	 bne $t4, $t0, loop
+   	 
+	li $t4, 0
+	
+
+loop2:	
+	 li $v0, 4
+   	 la $a0, soru2
+   	 syscall
+	
+   	 li $v0, 5
+   	syscall
+   	
+   	beq $v0, 1, displayDesired
+   	beq $v0, 2, rowbyrowSummation
+   	beq $v0, 3, columnbycolumn
+   	beq $v0, 4, finish
+ skip:
+   	j loop2
+ finish:
+   	li $v0,10
+   	syscall
+displayDesired:
+	addi	$sp, $sp, -28
+	sw	$s5, 24($sp)
+	sw	$s0, 20($sp)
+	sw	$s1, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s3, 8($sp)
+	sw	$s4, 4($sp)
+	sw	$ra, 0($sp) 
+	
+	add $s2, $t6,0
+	
+	li $v0, 4
+   	la $a0, soru3
+   	syscall
+   	
+   	li $v0, 5
+   	syscall
+	add $s0, $v0, $zero
+	
+	li $v0, 4
+   	la $a0, soru4
+   	syscall
+   	
+   	li $v0, 5
+   	syscall
+	add $s1, $v0, $zero
+	
+	add $s0, $s0, -1
+	add $s1, $s1, -1
+	sll $s0,$s0,2
+	sll $s1,$s1,2
+	mul $s0, $s0, $a1
+	
+	add $s2, $s2,$s0
+	add $s2, $s2,$s1
+	lw	$a0, 0($s2)
+	li $v0,1
+	syscall
+	
+	li $v0, 4
+	la $a0, newline
+	syscall
+	
+	lw	$ra, 0($sp)
+	lw	$s4, 4($sp)
+	lw	$s3, 8($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 16($sp)
+	lw	$s0, 20($sp)
+	lw	$s5, 24($sp)
+	addi	$sp, $sp, 28
+	
+	j skip
+	
+rowbyrowSummation:
+	addi	$sp, $sp, -28
+	sw	$s5, 24($sp)
+	sw	$s0, 20($sp)
+	sw	$s1, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s3, 8($sp)
+	sw	$s4, 4($sp)
+	sw	$ra, 0($sp) 
+	
+	add $s2, $t6,0
+	add $s3,$s3,$zero
+	add $s4,$s4,$zero
+	
+	add $s5, $zero, $t0
+	li $v0, 4
+   	la $a0, soru5
+   	syscall
+doit:	
+	lw $s0, 0($s2)
+	lw $a0, 0($s2)
+	add $s4,$s4,$s0
+	li $v0,1
+	syscall
+	
+	addi $s2, $s2,4
+	addi $s3, $s3,1
+	li $v0, 4
+	la $a0, newline2
+	syscall
+	
+	bne  $s3,$s5,doit
+	move $a0,$s4
+	li $v0,1
+	syscall
+	
+	lw	$ra, 0($sp)
+	lw	$s4, 4($sp)
+	lw	$s3, 8($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 16($sp)
+	lw	$s0, 20($sp)
+	lw	$s5, 24($sp)
+	addi	$sp, $sp, 28
+	
+	j skip
+columnbycolumn:
+	addi	$sp, $sp, -28
+	sw	$s5, 24($sp)
+	sw	$s0, 20($sp)
+	sw	$s1, 16($sp)
+	sw	$s2, 12($sp)
+	sw	$s3, 8($sp)
+	sw	$s4, 4($sp)
+	sw	$ra, 0($sp) 
+	
+	add $s2, $t6,0
+	add $s3,$s3,$zero
+	add $s4,$s4,$zero
+	
+	add $s5, $zero, $t0
+	li $v0, 4
+   	la $a0, soru5
+   	syscall
+doit2:	
+	lw $s0, 0($s2)
+	lw $a0, 0($s2)
+	add $s4,$s4,$s0
+	li $v0,1
+	syscall
+	
+	addi $s2, $s2,4
+	addi $s3, $s3,1
+	li $v0, 4
+	la $a0, newline2
+	syscall
+	
+	bne  $s3,$s5,doit2
+	move $a0,$s4
+	li $v0,1
+	syscall
+	
+	lw	$ra, 0($sp)
+	lw	$s4, 4($sp)
+	lw	$s3, 8($sp)
+	lw	$s2, 12($sp)
+	lw	$s1, 16($sp)
+	lw	$s0, 20($sp)
+	lw	$s5, 24($sp)
+	addi	$sp, $sp, 28
+	
+	j skip
+
+

@@ -1,0 +1,166 @@
+We are doing this lab with 2 person.
+
+1:
+CS224 / Lab 7
+4
+Seçkin Alp Kargı
+22001942
+12.15.2023
+
+2:
+CS224 / Lab 7
+4
+Kaan Özer
+22002672
+12.15.2023
+
+------------------------------------------------------------------------------------------
+a) Specify the special function registers (SFRs) for the I/O device(s) involved in Part2-b.
+
+-> TRISx : The purpose of this SFR is to identify if an I/O port is an input or an output.
+-> PORTx : Data may be written to or read from port pins using this SFR.
+
+TRISE, PORTA and TRISC,PORTB
+
+-------------------------------------------------------------------------------------------
+b) C code for Part2-b, with lots of comments, an explanatory header, well-chosen identifiers and good use of spacing and layout to make your program self-documenting.
+
+/* 
+*	DC MOTOR APPLICATION:
+* 	we will connect PORTA to our motor. We will configure with 5 V, we will pull up.
+* 	we will connect PORTB to our buttons. We will configure with 3 V, we will pull up. 
+*/
+
+void main() 
+{
+
+   // Configure analog pins as digital. By doing this, the digital input/output pins are 
+// configured to operate as pins for analog-to-digital conversion. Put differently, 	the // pins that were initially intended for analog input are now used for digital 	input-
+// output, enabling a wide range of digital functions.
+
+    ANSELC = 0xFFFF;
+    
+    // Disable JTAG.Turns off the capability of the Joint Test Action Group.
+// Joint Test Action Group is mostly a debugging interface, therefore it may be 
+//turned off to free up the corresponding pins for general-purpose input/output usage.
+
+    DDPCON.JTAGEN = 0;
+
+// 0xFFF = input, 0x000 = output
+// Making PORTA as a output.
+// Making PORTB as a input for button.
+    	PORTA = 0xFFFF;
+	PORTB = 0x0000;
+// 0xFFF = input, 0x000 = output
+// Defining TRISE and TRISC
+	TRISE = 0x0000;
+    	TRISC = 0xFFFF;
+	
+    // Our main while loop for examining the dc motor and push buttons.
+    while(1) 
+    {
+        
+        // We are controlloing our motor according to button 0. it is counter clockwise.
+        PORTA.RC1 = PORTB.RE0;
+        
+        // We are controlling our motor according to on button 1. It is clockwise.
+        PORTB.RC2 = PORTB.RE1;
+    }
+}
+
+--------------------------------------------------------------------------------------------------------------------------------
+c)Specify the special function registers (SFRs) for the I/O device(s) involved in Part2-c.
+TRISE -> output E
+TRISC -> output C
+PORTA -> displays the digits
+PORTB -> allows to decide whether button is on
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+d)C code for Part2-c, with lots of comments, an explanatory header, well-chosen identifiers and good use of spacing and layout to make your program self-documenting.
+/*
+Configuration for the code below:
+
+Connect portA to J1 Port of 4 Digit Seven Segment Module
+
+Jumpers of portA are : 5V, pull down ( top one to left, other to right )
+
+Connect portE to J2 Port of 4 Digit Seven Segment Module
+
+Jumpers of portE are : 5V, pull down ( top one to left, other to right )
+
+*/
+//binary_pattern is fixed
+unsigned char binary_pattern[] = {0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F};
+
+//it is the starting value of our digits, being incremented at the end of the loop			
+int digits[] = {1,2,3,4};	
+
+// our main method
+void main() 
+{
+
+// Configure AN pins as digital input/output
+AD1PCFG  = 0xFFFF;   
+ 
+// portA is output to D
+TRISE = 0x00 ;  
+		
+// Disable JTAG
+JTAGEN_bit  = 0;  
+
+// portE is output to AN
+TRISC =  0X00;  		
+
+     // our main while loop
+     while(1) 
+       {
+	 
+	 // Assigns the binary pattern corresponding to the value at the first position of the digits array to the PORTA
+         PORTA = binary_pattern[digits[0]];
+
+	 //digit 1
+         PORTB = 0x01 ;
+ 
+	 //1ms delayed
+         Delay_ms(1);
+
+	 // Assigns the binary pattern corresponding to the value at the first position of the digits array to the PORTA
+         PORTA = binary_pattern[digits[1]];
+
+	 //digit 2
+         PORTB = 0x02;
+
+	 //1ms delayed
+         Delay_ms(1);
+
+	 // Assigns the binary pattern corresponding to the value at the first position of the digits array to the PORTA
+         PORTA = binary_pattern[digits[2]];
+
+	 //digit 3
+         PORTB = 0x04;
+	
+  	 //1ms delayed
+         Delay_ms(1);
+
+	 // Assigns the binary pattern corresponding to the value at the first position of the digits array to the PORTA
+         PORTA = binary_pattern[digits[3]];
+
+	 //digit 4
+         PORTB  = 0x08 ;
+		
+	 //1ms delayed
+         Delay_ms (1);
+       
+        for ( int k = 0; k < 4 ; k++) 
+        {
+
+            digits[k] = digits[k] + 1;
+
+            if ( digits[k] = 5)
+            {
+                  digits[k] = 1;
+            }
+        }
+     }
+}

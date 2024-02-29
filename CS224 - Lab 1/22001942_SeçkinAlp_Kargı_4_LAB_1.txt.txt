@@ -1,0 +1,898 @@
+CS224
+Lab No: 1
+Section No: 4
+Seçkin Alp Kargı
+22001942
+06.10.2023
+
+pre1:
+---------------------------------------------------------------------------------
+.data
+	sayilar: .space 80
+	.align 2
+	yenisatir: .asciiz "\n"
+	bosluk: .asciiz ", "
+	nokta: .asciiz "."
+	soru1: .asciiz "Enter the array length (0-20): "
+	soru2: .asciiz "Enter a integer value: "
+	text1: .asciiz "Original Array: "
+	text2: .asciiz "Reverse Array: "
+	text3: .asciiz "Array length must be between 0 - 20 ! "
+	
+.text
+
+
+getArraySize:
+	
+	li $v0, 4
+	la $a0, text3
+	syscall
+	
+	#soru 1
+	la $a0, soru1
+	syscall
+	
+	# Get Array size
+	li $v0, 5
+	syscall
+	
+	move $t0, $v0
+	
+	addi $t6, $zero, 0
+	addi $t7, $zero, 20
+	
+	bgt $t0,$t7, getArraySize
+	blt $t0,$t6, getArraySize
+	#for
+	li $t7, 1 #counter
+	addi $t6, $zero,0
+	lw $t5, sayilar
+	
+	#t0 - array size
+	#t7 - counter
+	#t6 - index
+	
+arraydoldurma:	
+
+	bgt $t7, $t0, endArraydoldurma
+	
+	#soru 2
+	li $v0, 4
+	la $a0, soru2
+	syscall
+	
+	# Get number for Array 
+	li $v0, 5
+	syscall
+	
+	move $t1, $v0 
+	
+	#t1 - array value
+	
+	sw $t1, sayilar($t6)
+	addi $t6,$t6,4
+	
+	addi $t7,$t7,1 # Counter increment
+	j arraydoldurma # Jump to begining of loop
+endArraydoldurma:	
+
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	#print original array
+	addi $t2,$zero,0
+	addi $t1,$zero,0
+	li $v0, 4
+	la $a0, text1
+	syscall
+	
+yazdirma:
+	
+	lb $t6, sayilar($t2)
+		
+	addi $t2,$t2, 4 
+	addi $t1,$t1, 1
+	 	
+	li $v0,1
+	move $a0, $t6
+	syscall
+	
+	beq $t1, $t0 endYazdirma	
+	li $v0, 4
+	la $a0, bosluk
+	syscall
+		
+	j yazdirma
+endYazdirma:
+
+	li $v0, 4
+	la $a0, nokta
+	syscall
+	
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	#Reverse Loop
+   	la $t1, sayilar
+    	add $t6, $zero, $t0
+    	sll $t6, $t6, 2
+    	add $t2, $t1,$t6
+    	subi $t2, $t2, 4
+    	
+reverse:
+	
+	 
+    	lw $t4, ( $t1)  
+    	lw $t7, ($t2)
+    	
+    	 sw  $t7, ($t1)
+    	sw $t4 , ($t2) 
+    	
+	subi $t2, $t2,  4
+    	addi $t1 , $t1 ,4
+	
+	ble   $t2 , $t1, endReverse
+	
+    	j  reverse
+endReverse:
+
+	li $v0, 4
+	la $a0, text2
+	syscall
+	
+	addi $t2,$zero,0
+	addi $t1,$zero,0
+	
+yazdirma2:
+	
+	
+	lb $t6, sayilar($t2)
+		
+	addi $t2,$t2, 4 
+	addi $t1,$t1, 1
+	 	
+	li $v0,1
+	move $a0, $t6
+	syscall
+	
+	beq $t1, $t0 endYazdirma2	
+	li $v0, 4
+	la $a0, bosluk
+	syscall
+		
+	j yazdirma2
+endYazdirma2:
+	
+	li $v0, 4
+	la $a0, nokta
+	syscall
+	#exit
+	li $v0, 10
+	syscall
+	
+
+
+---------------------------------------------------------------------------------
+pre2:
+---------------------------------------------------------------------------------
+.data
+	text: .asciiz "You will input 3 integer values for this calculation."
+	text1: .asciiz "The result is: "
+	text2: .asciiz "Input the B value: "
+	text3: .asciiz "Input the C value: "
+	text4: .asciiz "Input the D value: "
+	text5: .asciiz "\nThe calculation A = (B / C + D Mod B - C) / B involves the division of B by C, the modulo operation of D by B, and subsequent addition, subtraction, and division operations.\nThe final result is the division of the entire expression by B."
+	yenisatir: .asciiz "\n" 
+.text
+	li $v0, 4
+	la $a0, text
+	syscall
+	
+	la $a0, yenisatir
+	syscall
+	
+	la $a0, text2
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t1, $v0
+	move $t5, $v0
+	move $t0, $v0
+	li $v0, 4
+	la $a0, text3
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t2, $v0
+	
+	li $v0, 4
+	la $a0, text4
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t3, $v0
+	
+	
+	li $t7,0
+	# 1 2 3  c
+	
+divc:	
+	sub $t1, $t1, $t2
+	addi $t7,$t7,1
+	bge $t1, $t2, divc
+	
+	move $t1,  $t5
+	
+	
+	
+	li $v0, 1
+	move $a0, $t7
+	syscall
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	move $t5,  $t3
+modc:
+	sub $t3,$t3,$t1
+	bge $t3,$t1,modc
+	move $t6, $t3
+	move $t3,  $t5
+	
+	li $v0, 1
+	move $a0, $t6
+	syscall
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	add $t7, $t7, $t6
+	
+	li $v0, 1
+	move $a0, $t7
+	syscall
+		li $v0, 4
+	la $a0, yenisatir
+	syscall
+	sub $t7, $t7, $t2
+	
+	
+	# 6 2 12 0
+	li $v0, 1
+	move $a0, $t7
+	syscall
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	li $t6,0
+divc2:	
+	blt $t7,$t0,bitti
+	sub $t7,$t7,$t0
+	addi $t6,$t6,1
+	bge $t7,$t0,divc2
+bitti:	
+	li $v0, 1
+	move $a0, $t6
+	syscall
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	li $v0, 4
+	la $a0, text1
+	syscall
+	
+	li $v0, 1
+	move $a0, $t6
+	syscall
+	
+	li $v0, 4
+	la $a0, text5
+	syscall
+	
+	li $v0, 10
+	syscall
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+---------------------------------------------------------------------------------
+Lab Work 1-B - Register Values: 
+----------------------------------------------------------------------------------
+##
+## Program1.asm - prints out "hello world"
+##
+##	a0 - points to the string
+##
+
+#################################
+#					 	#
+#		text segment		#
+#						#
+#################################
+
+	.text		
+
+# execution starts here
+	la $a0,str	# put string address into a0
+	li $v0,4	# system call to print
+	syscall		#   out a string
+
+	li $v0,10  # system call to exit
+	syscall	#    bye bye
+
+
+#################################
+#					 	#
+#     	 data segment		#
+#						#
+#################################
+
+	.data
+str:	.asciiz "Hello Onur\n"
+n:	.word	10
+
+##
+## end of file Program1.asm
+
+
+----------------------------------------------------------------------------------
+Lab Work 1-C - V0 value after 2nd syscall:
+----------------------------------------------------------------------------------
+##
+## Program2.asm asks user for temperature in Celsius,
+##  converts to Fahrenheit, prints the result.
+##
+##	v0 - reads in Celsius
+##	t0 - holds Fahrenheit result
+##	a0 - points to output strings
+##
+
+#################################
+#					 	#
+#		text segment		#
+#						#
+#################################
+
+	.text			
+
+	la $a0,prompt	# output prompt message on terminal
+	li $v0,4	# syscall 4 prints the string
+	syscall
+
+	li $v0, 5	# syscall 5 reads an integer
+	syscall
+
+	mul $t0, $v0, 9	# to convert,multiply by 9,
+	div $t0,$t0,5	# divide by 5, then
+	add $t0,$t0,32	# add 32
+
+	la $a0,ans1	# print string before result
+	li $v0,4
+	syscall
+
+	move $a0,$t0	# print integer result
+	li $v0,1		# using syscall 1
+	syscall
+
+	la $a0,endl	# system call to print
+	li $v0,4		# out a newline
+	syscall
+
+	li $v0,10		# system call to exit
+	syscall		#    bye bye
+
+
+#################################
+#					 	#
+#     	 data segment		#
+#						#
+#################################
+
+	.data
+prompt:	.asciiz "Enter temperature (Celsius): "
+ans1:	.asciiz "The temperature in Fahrenheit is "
+endl:	.asciiz "\n"
+
+##
+## end of file Program2.asm
+
+
+----------------------------------------------------------------------------------
+Lab Work 2 - Fibonnacii:
+----------------------------------------------------------------------------------
+##
+##	Program3.asm is a loop implementation
+##	of the Fibonacci function
+##        
+
+#################################
+#					 	#
+#		text segment		#
+#						#
+#################################
+
+	.text
+# Mistakes to Fix
+ # 1- syscal l eklemek
+ # 2- end1 end yapmak
+ # 3- f1b, fib yapmak 
+ # 4- exit için 100 ü 10 yapmak 
+ # 5- don u done yapmak
+ #6- vo yu $vo yapmak 
+ #7 - bgt deki 0 i 1 yapmak
+ 
+# execution starts here
+	li $a0,7	# to calculate fib(7)
+	jal fib		# call fib
+	move $a0,$v0	# print resul
+	li $v0, 1
+	syscall
+
+	la $a0,end	# print newline
+	li $v0,4
+	syscall
+
+	li $v0,10
+	syscall		# bye bye
+
+#------------------------------------------------
+
+
+fib:	move $v0,$a0	# initialise last element
+	blt $a0,2,done	# fib(0)=0, fib(1)=1
+
+	li $t0,0	# second last element
+	li $v0,1	# last element
+
+loop:	add $t1,$t0,$v0	# get next value
+	move $t0,$v0	# update second last
+	move $v0,$t1	# update last element
+	sub $a0,$a0,1	
+	bgt  $a0,1,loop	# exit loop when count=0
+done:	jr $ra
+
+#################################
+#					 	#
+#     	 data segment		#
+#						#
+#################################
+
+	.data
+end:	.asciiz "\n"
+
+##
+## end of Program3.asm
+
+----------------------------------------------------------------------------------
+Lab Work 3 - Calculation:
+----------------------------------------------------------------------------------
+.data
+	text: .asciiz "You will input 3 integer values for this calculation. The calculation x = ((b / 3) * d) - 5 + B) mod C"
+	text1: .asciiz "\nThe result is: "
+	text2: .asciiz "Input the b value: "
+	text3: .asciiz "Input the d value: "
+	text4: .asciiz "Input the c value: "
+	text5: .asciiz "\n((b / 3) * d) - 5 + B) mod C: "
+	text6: .asciiz "(b/3) : "
+	text7: .asciiz "\n((b / 3) * d : "
+	text8: .asciiz "\n((b / 3) * d) - 5 : "
+	text9: .asciiz "\n((b / 3) * d) - 5 + B) : "
+	yenisatir: .asciiz "\n" 
+.text
+	li $v0, 4
+	la $a0, text
+	syscall
+	
+	la $a0, yenisatir
+	syscall
+	
+	la $a0, text2
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t1, $v0
+	move $t3, $v0
+	 
+	
+	li $v0, 4
+	la $a0, text3
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t2, $v0
+	
+	# t1 - b, t2 d t4 c
+	li $v0, 4
+	la $a0, text4
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $t4, $v0
+	
+	
+	div $t5, $t1,3
+	
+	li $v0, 4
+	la $a0, text6
+	syscall
+	li $v0, 1
+	move $a0, $t5
+	syscall
+	
+	mult $t5, $t2 
+	
+	mflo $t5
+	li $v0, 4
+	la $a0, text7
+	syscall
+	li $v0, 1
+	move $a0, $t5
+	syscall
+	
+	sub $t5,$t5,5
+	
+	li $v0, 4
+	la $a0, text8
+	syscall
+	li $v0, 1
+	move $a0, $t5
+	syscall
+	
+	add $t5,$t5,$t3
+	
+	li $v0, 4
+	la $a0, text9
+	syscall
+	li $v0, 1
+	move $a0, $t5
+	syscall
+	
+	div $t5,$t4
+	mfhi $t5
+	
+	li $v0, 4
+	la $a0, text5
+	syscall
+	li $v0, 1
+	move $a0, $t5
+	syscall
+	
+	li $v0, 4
+	la $a0, text1
+	syscall
+	
+	li $v0, 1
+	move $a0, $t5
+	syscall
+	
+	li $v0, 10
+	syscall
+
+----------------------------------------------------------------------------------
+Lab Work 4 - Program with Simple Menu:
+----------------------------------------------------------------------------------
+.data
+	sayilar: .space 400
+	.align 2
+	option: .space 3
+	chara: .asciiz "a"
+	charb: .asciiz "b"
+	charc: .asciiz "c"
+	yenisatir: .asciiz "\n"
+	bosluk: .asciiz ", "
+	nokta: .asciiz "."
+	soru1: .asciiz "Enter the array length (0-100): "
+	soru2: .asciiz "Enter a integer value: "
+	text1: .asciiz "Array Elements: "
+	text2: .asciiz "a. Find the maximum number stored in the array and display that number.\nb. Find the number of times the maximum number appears in the array.\nc. Find how many numbers we have (other than the maximum number) that we can divide the maximum number without a remainder.\nd. Quit.\nChoose an option (a-d): "
+	text3: .asciiz "Array length must be between 0 - 100 ! "
+	text4: .asciiz "Maximum number in the array is: "
+	text5: .asciiz "Number of times maximum number appears: "
+	text6: .asciiz "Number of elements that we can divide maximum number: "
+	
+.text
+
+getArraySize:
+	
+	li $v0, 4
+	la $a0, text3
+	syscall
+	
+	#soru 1
+	la $a0, soru1
+	syscall
+	
+	# Get Array size
+	li $v0, 5
+	syscall
+	
+	# Invalid if size is not between 0 - 100
+	move $t0, $v0
+	addi $t6, $zero, 0
+	addi $t7, $zero, 100
+	
+	bgt $t0,$t7, getArraySize
+	blt $t0,$t6, getArraySize
+	
+	#for loop for Array fill
+	li $t7, 1 #counter
+	addi $t6, $zero,0
+	
+	#t0 - array size
+	#t7 - counter
+	#t6 - index
+	
+arraydoldurma:	
+	bgt $t7, $t0, endArraydoldurma
+	
+	#soru 2
+	li $v0, 4
+	la $a0, soru2
+	syscall
+	
+	# Get value for Array 
+	li $v0, 5
+	syscall
+	
+	move $t1, $v0 
+	
+	#t1 - array value
+	
+	sw $t1, sayilar($t6)
+	addi $t6,$t6,4
+	
+	addi $t7,$t7,1 # counterı arttırmak
+	j arraydoldurma # Loop başına dön
+endArraydoldurma:	
+
+	# Arrayi Orijinal Haliyle Başlangıçta Yazdırma
+yazdirma1:
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	
+	#print original array
+	addi $t2,$zero,0
+	addi $t1,$zero,0
+	li $v0, 4
+	la $a0, text1
+	syscall
+yazdirma:
+	
+	lb $t6, sayilar($t2)
+		
+	addi $t2,$t2, 4 
+	addi $t1,$t1, 1
+	 	
+	li $v0,1
+	move $a0, $t6
+	syscall
+	
+	beq $t1, $t0 endYazdirma	
+	li $v0, 4
+	la $a0, bosluk
+	syscall
+		
+	j yazdirma
+endYazdirma:
+
+	li $v0, 4
+	la $a0, nokta
+	syscall
+	
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+
+	li $v0, 4
+	la $a0, text2
+	syscall
+
+	
+	li $v0,12
+    	syscall	
+	move $t1,$v0
+
+    	li $v0, 4
+    	la $a0, yenisatir
+   	syscall
+	
+	# Kullanıcdan choice datasını alma ve if oluşturma
+	li $v0, 4
+	la $a0, yenisatir
+	syscall
+	la $a1, chara
+    	lb $t2, 0($a1)
+    	la $a2, charb
+    	lb $t3, 0($a2)
+    	la $a3, charc
+    	lb $t4, 0($a3)
+    	
+    	beq $t1,$t2,equala
+	beq $t1,$t3,equalb
+	beq $t1,$t4,equalc
+	
+	# equal d exit
+	li $v0, 10
+	syscall
+	
+	# if A
+	equala:
+	li $v0, 4
+    	la $a0, text4
+   	syscall
+   	
+  	li $t7, 1 #counter
+	addi $t6, $zero,0
+	addi $t2, $zero,4
+	
+	#t0 - array size
+	#t7 - counter
+	#t6 - index
+	#t1 - maksimum
+	lw $t1, sayilar($t6)
+	
+	#Finding Maksimum Number with Loop
+maksimumbul:	
+	bge $t7, $t0, endMaksimumbul
+	
+	lw $t3, sayilar($t2)
+	
+	bge $t1,$t3,endd
+	
+	move $t1, $t3
+endd:
+	addi $t7,$t7,1 
+	bge $t7, $t0, endMaksimumbul
+	addi $t6,$t6,4
+	addi $t2,$t2,4
+	
+	# Counter increment
+	j maksimumbul # Jump to begining of loop
+endMaksimumbul:	
+
+	li $v0, 1
+    	move $a0, $t1
+   	syscall
+	
+	# Jump for taking new input
+	j yazdirma1
+	
+	# If Loop B
+equalb:
+	li $v0, 4
+    	la $a0, text5
+   	syscall
+   	
+     	
+  	li $t7, 1 #counter
+
+	addi $t6, $zero,0
+	li $t4, 1
+	addi $t2, $zero,4
+	
+	#t0 - array size
+	#t7 - counter
+	#t6 - index
+	#t1 - maksimum
+	lw $t1, sayilar($t6)
+	
+	# Fındıng Maksimum Tekrar
+maksimumtekrar:	
+	bge $t7, $t0, endMaksimumtekrar
+	
+	lw $t3, sayilar($t2)
+	
+	
+	blt $t1,$t3,end2	
+	bgt  $t1,$t3,end1
+	
+	addi $t4,$t4,1
+	j end1
+end2:
+	li $t4,1
+	move $t1,$t3
+	
+end1:
+	addi $t7,$t7,1 
+	bge $t7, $t0, endMaksimumtekrar
+	addi $t2,$t2,4
+	
+	
+	j maksimumtekrar
+endMaksimumtekrar:
+
+	
+	li $v0, 1
+    	move $a0, $t4
+   	syscall
+	
+	# Jump for taking new input
+	j yazdirma1
+	
+	# If C
+equalc:
+	li $v0, 4
+    	la $a0, text6
+   	syscall
+   	
+   	li $t7, 1 #counter
+	addi $t6, $zero,0
+	addi $t2, $zero,4
+	
+	#t0 - array size
+	#t7 - counter
+	#t6 - index
+	#t1 - maksimum
+	lw $t1, sayilar($t6)
+	
+	#Fındıng Bolunebilme sayısı
+maksimumbul1:	
+	bge $t7, $t0, endMaksimumbul1
+	
+	lw $t3, sayilar($t2)
+	
+	bge $t1,$t3,endd1
+	
+	move $t1, $t3
+endd1:
+	addi $t7,$t7,1 
+	bge $t7, $t0, endMaksimumbul1
+	addi $t6,$t6,4
+	addi $t2,$t2,4
+	
+	
+	j maksimumbul1 
+endMaksimumbul1:	
+	
+
+	# $t1 maksimum
+	li $t7,0
+	addi $t5, $zero,0
+	addi $t2, $zero,0
+bolunmebul:	
+	bge $t7, $t0, endBolunmebul
+	
+	lw $t3, sayilar($t2)
+	
+	bge $t3,$t1,endd2
+	
+	div $t1, $t3
+	mfhi $t4
+	
+	bne $t4,0,endd2
+	addi $t5,$t5,1
+	
+endd2:
+	addi $t7,$t7,1 
+	bge $t7, $t0, endBolunmebul
+	addi $t2,$t2,4
+
+	# Counter increment
+	j bolunmebul # Jump to begining of loop
+endBolunmebul:	
+   	
+   	li $v0, 1
+    	move $a0, $t5
+   	syscall
+   	
+   	# Jump for taking new input
+	j yazdirma1
+
+----------------------------------------------------------------------------------
